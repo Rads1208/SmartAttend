@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Attendance Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { auth } from '../assets/js/firebaseInit.js';
+        import { signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '/login.html';
+            }
+            document.getElementById('user-display-name').textContent = `Welcome, ${user.displayName || 'User'}`;
+        });
+        window.logout = async () => {
+            try {
+                await signOut(auth);
+                window.location.href = '/login.html';
+            } catch (error) {
+                console.error('Logout Failed', error);
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white shadow mb-8">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-lg font-semibold">Admin Dashboard</div>
+                <div class="flex items-center">
+                    <div id="user-display-name" class="mr-4 text-green-600 font-semibold"></div>
+                    <button onclick="logout()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6">
+        <!-- System Overview -->
+        <div class="bg-white shadow rounded p-4 mb-6">
+            <h2 class="text-xl font-semibold mb-4">System Overview</h2>
+            <p>Total Students: 1200</p>
+            <p>Total Faculty: 150</p>
+            <p>Attendance Rate: 95%</p>
+        </div>
+
+        <!-- User Management -->
+        <div class="bg-white shadow rounded p-4 mb-6">
+            <h2 class="text-xl font-semibold mb-4">User Management</h2>
+            <p>New Registrations: 25</p>
+            <p>Pending Approvals: 5</p>
+            <p>Recently Added Faculty: Dr. Jane Smith, Mathematics Department</p>
+        </div>
+
+        <!-- Reports -->
+        <div class="bg-white shadow rounded p-4 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Reports</h2>
+            <p>Attendance Reports</p>
+            <p>Grade Reports</p>
+            <p>Course Completion Reports</p>
+        </div>
+
+        <!-- System Settings -->
+        <div class="bg-white shadow rounded p-4">
+            <h2 class="text-xl font-semibold mb-4">System Settings</h2>
+            <p>Backup Schedule: Daily at 2:00 AM</p>
+            <p>Last Backup: 24 hours ago</p>
+            <p>Update Frequency: Every Sunday at 1:00 AM</p>
+        </div>
+    </div>
+
+</body>
+</html>
