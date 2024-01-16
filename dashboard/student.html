@@ -1,119 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Dashboard - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        import { auth } from '../assets/js/firebaseInit.js';
-        import { signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      import { auth, storage, database } from "../assets/js/firebaseInit.js";
+      import {
+        signOut,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import {
+        ref,
+        listAll,
+        getDownloadURL,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+      import {
+        ref as dbRef,
+        get,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = '/login.html';
-            }
-            document.getElementById('user-display-name').textContent = `Welcome, ${user.displayName || 'User'}`;
-        });
-        window.logout = async () => {
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = "/login.html";
+        } else {
+          document.getElementById(
+            "user-display-name"
+          ).textContent = `Welcome, ${user.displayName || "User"}`;
+          displayUserPhotos(user);
+        }
+      });
+
+      async function displayUserPhotos(user) {
+        const userDbRef = dbRef(database, `users/${user.uid}`);
+        try {
+          const snapshot = await get(userDbRef);
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            const photoPath = `user_photos/${userData.year}/${userData.class}/${userData.stream}/${userData.enrollmentNumber}/face_photo`;
+            const photoRef = ref(storage, photoPath);
+            const photosContainer = document.getElementById("uploaded-photos");
+            
             try {
-                await signOut(auth);
-                window.location.href = '/login.html';
+              const url = await getDownloadURL(photoRef);
+              const img = document.createElement("img");
+              img.src = url;
+              img.classList.add("w-full", "h-auto", "rounded");
+              photosContainer.appendChild(img);
             } catch (error) {
-                console.error('Logout Failed', error);
+              console.error("Error fetching photo:", error);
             }
-        };
+          } else {
+            console.error("User data not found in the database");
+          }
+        } catch (error) {
+          console.error("Error fetching user data from database:", error);
+        }
+      }
+
+      window.logout = async () => {
+        try {
+          await signOut(auth);
+          window.location.href = "/login.html";
+        } catch (error) {
+          console.error("Logout Failed", error);
+        }
+      };
     </script>
-</head>
+  </head>
 
-<body class="bg-gray-100">
-
+  <body class="bg-gray-100">
     <!-- Navbar -->
     <nav class="bg-white shadow mb-8">
-        <div class="container mx-auto px-6 py-3">
-            <div class="flex justify-between items-center">
-                <div class="text-lg font-semibold">Student Dashboard</div>
-                <div class="flex items-center">
-                    <div id="user-display-name" class="mr-4 text-green-600 font-semibold"></div>
-                    <button onclick="logout()"
-                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300">Logout</button>
-                </div>
-            </div>
+      <div class="container mx-auto px-6 py-3">
+        <div class="flex justify-between items-center">
+          <div class="text-lg font-semibold">Student Dashboard</div>
+          <div class="flex items-center">
+            <div
+              id="user-display-name"
+              class="mr-4 text-green-600 font-semibold"
+            ></div>
+            <button
+              onclick="logout()"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Logout
+            </button>
+          </div>
         </div>
+      </div>
     </nav>
 
     <!-- Main Content -->
     <div class="container mx-auto px-6">
-        <!-- Attendance Summary -->
-        <div class="bg-white shadow rounded p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Attendance Summary</h2>
-            <canvas id="attendanceChart"></canvas>
-        </div>
+      <!-- Attendance Summary -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Attendance Summary</h2>
+        <canvas id="attendanceChart"></canvas>
+      </div>
 
-        <!-- Subjects Enrolled -->
-        <div class="bg-white shadow rounded p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Subjects Enrolled</h2>
-            <ul>
-                <!-- List subjects here -->
-                <li>Mathematics - 85%</li>
-                <li>Physics - 90%</li>
-                <li>Literature - 95%</li>
-            </ul>
-        </div>
+      <!-- Subjects Enrolled -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Subjects Enrolled</h2>
+        <ul>
+          <!-- List subjects here -->
+          <li>Mathematics - 85%</li>
+          <li>Physics - 90%</li>
+          <li>Literature - 95%</li>
+        </ul>
+      </div>
 
-        <!-- Upcoming Classes or Events -->
-        <div class="bg-white shadow rounded p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Upcoming Classes</h2>
-            <div>
-                <!-- List of upcoming classes/events here -->
-                <p>Calculus - Monday 10am</p>
-                <p>History - Tuesday 1pm</p>
-            </div>
+      <!-- Upcoming Classes or Events -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Upcoming Classes</h2>
+        <div>
+          <!-- List of upcoming classes/events here -->
+          <p>Calculus - Monday 10am</p>
+          <p>History - Tuesday 1pm</p>
         </div>
+      </div>
 
-        <!-- Notifications or Queries -->
-        <div class="bg-white shadow rounded p-4">
-            <h2 class="text-xl font-semibold mb-4">Notifications</h2>
-            <div>
-                <!-- List of notifications or queries here -->
-                <p>No new notifications.</p>
-            </div>
+      <div class="container mx-auto px-6 mt-6">
+        <h2 class="text-xl font-semibold mb-4">Your Uploaded Photos</h2>
+        <div
+          id="uploaded-photos"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"
+        >
+          <!-- Photos will be displayed here -->
         </div>
+      </div>
+
+      <!-- Notifications or Queries -->
+      <div class="bg-white shadow rounded p-4">
+        <h2 class="text-xl font-semibold mb-4">Notifications</h2>
+        <div>
+          <!-- List of notifications or queries here -->
+          <p>No new notifications.</p>
+        </div>
+      </div>
     </div>
 
     <script>
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-        const attendanceChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Mathematics', 'Physics', 'Literature'],
-                datasets: [{
-                    label: 'Attendance Rate',
-                    data: [85, 90, 95],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(54, 162, 235, 0.5)',
-                        'rgba(255, 206, 86, 0.5)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)'
-                    ],
-                    borderWidth: 1
-                }]
+      const ctx = document.getElementById("attendanceChart").getContext("2d");
+      const attendanceChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Mathematics", "Physics", "Literature"],
+          datasets: [
+            {
+              label: "Attendance Rate",
+              data: [85, 90, 95],
+              backgroundColor: [
+                "rgba(255, 99, 132, 0.5)",
+                "rgba(54, 162, 235, 0.5)",
+                "rgba(255, 206, 86, 0.5)",
+              ],
+              borderColor: [
+                "rgba(255, 99, 132, 1)",
+                "rgba(54, 162, 235, 1)",
+                "rgba(255, 206, 86, 1)",
+              ],
+              borderWidth: 1,
             },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+          ],
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
     </script>
-</body>
-
+  </body>
 </html>

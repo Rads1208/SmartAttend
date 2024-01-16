@@ -1,5 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // web app's Firebase configuration
   const firebaseConfig = {
@@ -14,3 +16,5 @@ import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
+export const database = getDatabase(app);

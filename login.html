@@ -7,46 +7,57 @@
     <title>Login - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        import { auth } from './assets/js/firebaseInit.js';
+        import { auth, database } from './assets/js/firebaseInit.js';
         import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-
+        import { ref, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+    
         document.querySelector('form').addEventListener('submit', async (event) => {
             event.preventDefault();
             const email = document.querySelector('#email').value;
             const password = document.querySelector('#password').value;
             const errorBox = document.querySelector('#error-box');
-            const role = document.querySelector('#role-select').value;
-
+    
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-
-                switch (role) {
-                    case 'student':
-                        window.location.href = './dashboard/student.html';
-                        break;
-                    case 'faculty':
-                        window.location.href = './dashboard/faculty.html';
-                        break;
-                    case 'admin':
-                        window.location.href = './dashboard/admin.html';
-                        break;
-                    default:
-                        throw new Error('No role selected');
+    
+                // Get user role from the database
+                const userRoleRef = ref(database, 'users/' + user.uid + '/role');
+                const snapshot = await get(userRoleRef);
+                if (snapshot.exists()) {
+                    const role = snapshot.val();
+    
+                    // Redirect based on the role
+                    switch (role) {
+                        case 'student':
+                            window.location.href = './dashboard/student.html';
+                            break;
+                        case 'faculty':
+                            window.location.href = './dashboard/faculty.html';
+                            break;
+                        case 'admin':
+                            window.location.href = './dashboard/admin.html';
+                            break;
+                        default:
+                            throw new Error('No role defined for this user');
+                    }
+                } else {
+                    throw new Error('User role not found');
                 }
             } catch (error) {
                 errorBox.textContent = error.message;
                 errorBox.classList.remove('hidden');
-                console.error("Registration failed:", error);
+                console.error("Login failed:", error);
             }
         });
-
+    
         // Dismiss error box
         window.dismissError = () => {
             const errorBox = document.querySelector('#error-box');
             errorBox.classList.add('hidden');
         };
     </script>
+    
 </head>
 
 <body class="bg-gray-100">
@@ -102,7 +113,7 @@
             </div>
 
             <!-- Role Selection Dropdown -->
-            <div class="mb-4">
+            <div class="mb-4" hidden>
                 <select id="role-select"
                     class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
                     <option value="student">Student</option>

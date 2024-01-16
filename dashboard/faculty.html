@@ -1,75 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Faculty Dashboard - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        import { auth } from '../assets/js/firebaseInit.js';
-        import { signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      import { auth } from "../assets/js/firebaseInit.js";
+      import {
+        signOut,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import {
+        getDatabase,
+        ref,
+        query,
+        orderByChild,
+        equalTo,
+        onValue,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = '/login.html';
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = "/login.html";
+        } else {
+          document.getElementById(
+            "user-display-name"
+          ).textContent = `Welcome, ${user.displayName || "User"}`;
+          document.getElementById("teacher-name").value =
+            user.displayName || "Unknown Teacher";
+
+          const db = getDatabase();
+          const attendanceRef = ref(db, "attendance");
+          const findByTeacherQuery = query(
+            attendanceRef,
+            orderByChild("teacher_name"),
+            equalTo(user.displayName || "Unknown Teacher")
+          );
+
+          onValue(findByTeacherQuery, (snapshot) => {
+            const data = snapshot.val();
+            const attendanceTable =
+              document.getElementById("attendance-records");
+            attendanceTable.innerHTML = "";
+
+            if (data) {
+              Object.keys(data).forEach((key) => {
+                const record = data[key];
+                const readableTime = formatTimestamp(record.timestamp);
+                const row = `<tr>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.student_name}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.roll_number}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.class}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.stream}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.year}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.subject_code}</td>
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${readableTime}</td>
+                </tr>`;
+                attendanceTable.innerHTML += row;
+              });
+            } else {
+              attendanceTable.innerHTML =
+                "<tr><td colspan='5' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found.</td></tr>";
             }
-            document.getElementById('user-display-name').textContent = `Welcome, ${user.displayName || 'User'}`;
+          });
+        }
+      });
+
+      function formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        return (
+          date.toLocaleDateString("en-US") +
+          " " +
+          date.toLocaleTimeString("en-US")
+        );
+      }
+
+      document
+        .getElementById("start-class-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const subjectCode = document.getElementById("subject-code").value;
+          const classValue = document.getElementById("class").value;
+          const stream = document.getElementById("stream").value;
+          const year = document.getElementById("year").value;
+          const teacherName = document.getElementById("teacher-name").value;
+
+          // AJAX request to our backend server
+          fetch("http://localhost:5000/start-class", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              year,
+              subjectCode,
+              class: classValue,
+              stream,
+              teacherName,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Class started:", data);
+              alert("Class started!");
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert(error);
+            });
         });
-        window.logout = async () => {
-            try {
-                await signOut(auth);
-                window.location.href = '/login.html';
-            } catch (error) {
-                console.error('Logout Failed', error);
-            }
-        };
+
+      window.logout = async () => {
+        try {
+          await signOut(auth);
+          window.location.href = "/login.html";
+        } catch (error) {
+          console.error("Logout Failed", error);
+        }
+      };
     </script>
-</head>
-<body class="bg-gray-100">
+  </head>
+
+  <body class="bg-gray-100">
     <!-- Navbar -->
     <nav class="bg-white shadow mb-8">
-        <div class="container mx-auto px-6 py-3">
-            <div class="flex justify-between items-center">
-                <div class="text-lg font-semibold">Faculty Dashboard</div>
-                <div class="flex items-center">
-                    <div id="user-display-name" class="mr-4 text-green-600 font-semibold"></div>
-                    <button onclick="logout()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300">Logout</button>
-                </div>
-            </div>
+      <div class="container mx-auto px-6 py-3">
+        <div class="flex justify-between items-center">
+          <div class="text-lg font-semibold">Faculty Dashboard</div>
+          <div class="flex items-center">
+            <div
+              id="user-display-name"
+              class="mr-4 text-green-600 font-semibold"
+            ></div>
+            <button
+              onclick="logout()"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Logout
+            </button>
+          </div>
         </div>
+      </div>
     </nav>
 
     <!-- Main Content -->
     <div class="container mx-auto px-6">
-        <!-- Class Schedule -->
-        <div class="bg-white shadow rounded p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Your Schedule</h2>
-            <ul>
-                <li>Monday: Calculus (9:00 AM - 10:30 AM)</li>
-                <li>Wednesday: Linear Algebra (1:00 PM - 2:30 PM)</li>
-                <li>Friday: Statistics (11:00 AM - 12:30 PM)</li>
-            </ul>
-        </div>
+      <!-- Start new class -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Start Class</h2>
+        <form id="start-class-form">
+          <!-- Year Dropdown -->
+          <select
+            id="year"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Year/Batch</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+          </select>
 
-        <!-- Class Attendance -->
-        <div class="bg-white shadow rounded p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Class Attendance</h2>
-            <p>Calculus: 90% average attendance</p>
-            <p>Linear Algebra: 85% average attendance</p>
-            <p>Statistics: 87% average attendance</p>
-        </div>
+          <!-- Class Dropdown -->
+          <select
+            id="class"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Class</option>
+            <option value="B.Tech">Bachelor of Technology</option>
+            <option value="M.Tech">Masters of Technology</option>
+          </select>
 
-        <!-- Queries from Students -->
-        <div class="bg-white shadow rounded p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Student Queries</h2>
-            <p>You have 3 new queries this week.</p>
-            <ul>
-                <li>John Doe: Request for extended deadline on project submission.</li>
-                <li>Jane Smith: Clarification needed on topic covered last Wednesday.</li>
-                <li>Emily Johnson: Inquire about office hours for additional help.</li>
-            </ul>
+          <!-- Stream Dropdown -->
+          <select
+            id="stream"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Stream</option>
+            <option value="IT">IT</option>
+            <option value="CSE">CSE</option>
+          </select>
+
+          <!-- Subject Code Dropdown -->
+          <select
+            id="subject-code"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Subject</option>
+            <option value="CS101">CS - 101</option>
+          </select>
+          <!-- Hidden Teacher Name -->
+          <input type="hidden" id="teacher-name" required />
+
+          <!-- Submit Button -->
+          <div class="text-right">
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Start Class
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Attendance Records -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <div class="overflow-x-auto">
+          <table class="min-w-full leading-normal">
+            <caption class="text-lg font-semibold text-gray-700 p-4">
+              Attendance Records
+            </caption>
+            <thead>
+              <tr>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Student Name
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Roll Number
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Class
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Stream
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Batch
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Subject
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Attandance Time
+                </th>
+              </tr>
+            </thead>
+            <tbody id="attendance-records">
+              <!-- Attendance data rows will be inserted here by JavaScript -->
+            </tbody>
+          </table>
         </div>
+      </div>
+      <!-- Class Schedule -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Your Schedule</h2>
+        <ul>
+          <li>Monday: Calculus (9:00 AM - 10:30 AM)</li>
+          <li>Wednesday: Linear Algebra (1:00 PM - 2:30 PM)</li>
+          <li>Friday: Statistics (11:00 AM - 12:30 PM)</li>
+        </ul>
+      </div>
+
+      <!-- Class Attendance -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Class Attendance</h2>
+        <p>Calculus: 90% average attendance</p>
+        <p>Linear Algebra: 85% average attendance</p>
+        <p>Statistics: 87% average attendance</p>
+      </div>
+
+      <!-- Queries from Students -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Student Queries</h2>
+        <p>You have 3 new queries this week.</p>
+        <ul>
+          <li>
+            John Doe: Request for extended deadline on project submission.
+          </li>
+          <li>
+            Jane Smith: Clarification needed on topic covered last Wednesday.
+          </li>
+          <li>
+            Emily Johnson: Inquire about office hours for additional help.
+          </li>
+        </ul>
+      </div>
     </div>
-
-</body>
+  </body>
 </html>

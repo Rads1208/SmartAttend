@@ -1,153 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        import { auth } from './assets/js/firebaseInit.js';
-        import { createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      import { auth, storage, database } from "./assets/js/firebaseInit.js";
+      import { ref as storageRef, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+      import { ref as dbRef, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+      import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        document.querySelector('form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const displayName = document.querySelector('#name').value;
-            const email = document.querySelector('#email').value;
-            const password = document.querySelector('#password').value;
-            const role = document.querySelector('#role-select').value;
-            const errorBox = document.querySelector('#error-box');
+      document.getElementById("role-select").addEventListener("change", function () {
+          const isStudent = this.value === "student";
+          document.getElementById("student-fields").classList.toggle("hidden", !isStudent);
+          document.getElementById("photo").classList.toggle("hidden", !isStudent);
+      });
 
+      document.querySelector("form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const displayName = document.querySelector("#name").value;
+          const email = document.querySelector("#email").value;
+          const password = document.querySelector("#password").value;
+          const role = document.querySelector("#role-select").value;
+          const errorBox = document.querySelector("#error-box");
+          const progressBar = document.getElementById("progress-indicator");
+
+          if (role === "student") {
+              const enrollmentNumber = document.querySelector("#enrollment-number").value;
+              const year = document.querySelector("#year").value;
+              const classValue = document.querySelector("#class").value;
+              const stream = document.querySelector("#stream").value;
+
+              if (!enrollmentNumber || !year || !classValue || !stream) {
+                  errorBox.textContent = "Please fill in all student fields";
+                  errorBox.classList.remove("hidden");
+                  return;
+              }
+
+              if (document.getElementById("photo").files.length == 0) {
+                  errorBox.textContent = "Please add your face photo.";
+                  errorBox.classList.remove("hidden");
+                  return;
+              }
+
+              try {
+                  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                  const user = userCredential.user;
+                  await updateProfile(user, { displayName });
+
+                  progressBar.classList.remove("hidden");
+
+                  if (document.getElementById("photo").files.length > 0) {
+                      const photo = document.getElementById("photo").files[0];
+                      const photoRef = storageRef(storage, `user_photos/${year}/${classValue}/${stream}/${enrollmentNumber}/face_photo`);
+                      const uploadTask = uploadBytesResumable(photoRef, photo);
+
+                      await new Promise((resolve, reject) => {
+                          uploadTask.on(
+                              "state_changed",
+                              (snapshot) => {
+                                  const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                  progressBar.querySelector(".progress-bar").style.width = progress + "%";
+                              },
+                              (error) => reject(error),
+                              () => resolve()
+                          );
+                      });
+                  }
+
+                  const userDbRef = dbRef(database, `users/${user.uid}`);
+                  await set(userDbRef, {
+                      email,
+                      displayName,
+                      role,
+                      enrollmentNumber,
+                      year,
+                      class: classValue,
+                      stream
+                  });
+
+                  progressBar.classList.add("hidden");
+                  window.location.href = "./dashboard/student.html";
+              } catch (error) {
+                  progressBar.classList.add("hidden");
+                  errorBox.textContent = error.message;
+                  errorBox.classList.remove("hidden");
+                  console.error("Registration failed:", error);
+              }
+          } else {
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                await updateProfile(user, { displayName: displayName });
-                switch (role) {
-                    case 'student':
-                        window.location.href = './dashboard/student.html';
-                        break;
-                    case 'faculty':
-                        window.location.href = './dashboard/faculty.html';
-                        break;
-                    default:
-                        throw new Error('No role selected');
-                }
+              const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+              const user = userCredential.user;
+              await updateProfile(user, { displayName });
+
+
+              const userDbRef = dbRef(database, `users/${user.uid}`);
+                  await set(userDbRef, {
+                      email,
+                      displayName,
+                      role
+                  });
+
+              window.location.href = "./dashboard/faculty.html";
             } catch (error) {
-                errorBox.textContent = error.message;
-                errorBox.classList.remove('hidden');
-                console.error("Registration failed:", error);
+              errorBox.textContent = error.message;
+              errorBox.classList.remove("hidden");
+              console.error("Registration failed:", error);
             }
-        });
+          }
+      });
+  </script>
+    <style>
+      .progress-bar {
+        height: 5px;
+        transition: width 0.4s ease;
+      }
+    </style>
+  </head>
 
-        // Dismiss error box
-        window.dismissError = () => {
-            const errorBox = document.querySelector('#error-box');
-            errorBox.classList.add('hidden');
-        };
-    </script>
-</head>
-
-<body class="bg-gray-100">
+  <body class="bg-gray-100">
     <!-- Navbar -->
     <nav class="bg-white shadow mb-8">
-        <div class="container mx-auto px-6 py-3">
-            <div class="flex justify-between items-center">
-                <div>
-                    <!-- Clickable logo or text to go back home -->
-                    <a href="/index.html" class="text-lg font-semibold text-green-600">Attendance System</a>
-                </div>
-                <div>
-                    <!-- Optional: If you want a dedicated 'Back to Home' button -->
-                    <a href="/index.html" class="text-green-500 hover:text-green-700">Back to Home</a>
-                </div>
-            </div>
+      <div class="container mx-auto px-6 py-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <!-- Clickable logo or text to go back home -->
+            <a href="/index.html" class="text-lg font-semibold text-green-600"
+              >Attendance System</a
+            >
+          </div>
+          <div>
+            <!-- Optional: If you want a dedicated 'Back to Home' button -->
+            <a href="/index.html" class="text-green-500 hover:text-green-700"
+              >Back to Home</a
+            >
+          </div>
         </div>
+      </div>
     </nav>
     <!-- Error Alert Box -->
-    <div id="error-box"
-        class="hidden fixed inset-0 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-        role="alert" style="z-index: 50;">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="p-4 max-w-md mx-auto">
-                <div class="flex">
-                    <div class="py-1"><strong class="font-bold">Oops!</strong></div>
-                    <div class="ml-auto py-1">
-                        <svg class="fill-current h-6 w-6 text-red-500 cursor-pointer" role="button"
-                            onclick="dismissError()" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <title>Close</title>
-                            <path
-                                d="M14.348 14.849a.5.5 0 00.708 0l2-2a.5.5 0 00-.708-.708l-2 2a.5.5 0 00-.708.708zm-4.348-3.249a.5.5 0 00-.708-.708l-2 2a.5.5 0 001.414 1.414l2-2zm-4-5a.5.5 0 01.708 0l2 2a.5.5 0 01-.708.708l-2-2a.5.5 0 01.708-.708zm8 0a.5.5 0 00-.708 0l-2 2a.5.5 0 00.708.708l2-2a.5.5 0 00-.708-.708z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="mt-2 mb-4">
-                    <span class="block sm:inline" id="error-message">Your error message goes here.</span>
-                </div>
+    <div
+      id="error-box"
+      class="hidden fixed inset-0 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+      role="alert"
+      style="z-index: 50"
+    >
+      <div class="flex items-center justify-center min-h-screen">
+        <div class="p-4 max-w-md mx-auto">
+          <div class="flex">
+            <div class="py-1"><strong class="font-bold">Oops!</strong></div>
+            <div class="ml-auto py-1">
+              <svg
+                class="fill-current h-6 w-6 text-red-500 cursor-pointer"
+                role="button"
+                onclick="dismissError()"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+              >
+                <title>Close</title>
+                <path
+                  d="M14.348 14.849a.5.5 0 00.708 0l2-2a.5.5 0 00-.708-.708l-2 2a.5.5 0 00-.708.708zm-4.348-3.249a.5.5 0 00-.708-.708l-2 2a.5.5 0 001.414 1.414l2-2zm-4-5a.5.5 0 01.708 0l2 2a.5.5 0 01-.708.708l-2-2a.5.5 0 01.708-.708zm8 0a.5.5 0 00-.708 0l-2 2a.5.5 0 00.708.708l2-2a.5.5 0 00-.708-.708z"
+                />
+              </svg>
             </div>
+          </div>
+          <div class="mt-2 mb-4">
+            <span class="block sm:inline" id="error-message"
+              >Your error message goes here.</span
+            >
+          </div>
         </div>
+      </div>
     </div>
 
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8">
-            <div>
-                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
-                <p class="mt-2 text-center text-sm text-gray-600">
-                    Or
-                    <a href="login.html" class="font-medium text-green-600 hover:text-green-500"> login to your account
-                    </a>
-                </p>
-            </div>
-
-            <!-- Role Selection Dropdown -->
-            <div class="mb-4">
-                <select id="role-select"
-                    class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                    <option value="student">Student</option>
-                    <option value="faculty">Faculty</option>
-                </select>
-            </div>
-
-            <!-- Registration Form -->
-            <form class="mt-8 space-y-6" action="#" method="POST">
-                <input type="hidden" name="role" value="" id="role-input">
-                <div class="rounded-md shadow-sm -space-y-px">
-                    <div>
-                        <label for="name" class="sr-only">Full name</label>
-                        <input id="name" name="name" type="text" required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                            placeholder="Full name">
-                    </div>
-                    <div>
-                        <label for="email" class="sr-only">Email address</label>
-                        <input id="email" name="email" type="email" required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                            placeholder="Email address">
-                    </div>
-                    <div>
-                        <label for="password" class="sr-only">Password</label>
-                        <input id="password" name="password" type="password" required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                            placeholder="Password">
-                    </div>
-                </div>
-
-                <div>
-                    <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        Register
-                    </button>
-                </div>
-            </form>
+    <div
+      class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+    >
+      <div class="max-w-md w-full space-y-8">
+        <div>
+          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p class="mt-2 text-center text-sm text-gray-600">
+            Or
+            <a
+              href="login.html"
+              class="font-medium text-green-600 hover:text-green-500"
+            >
+              login to your account
+            </a>
+          </p>
         </div>
+
+        <!-- Role Selection Dropdown -->
+        <div class="mb-4">
+          <select
+            id="role-select"
+            class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          </select>
+        </div>
+
+        <!-- Registration Form -->
+        <form class="mt-8 space-y-6" action="#" method="POST">
+          <input type="hidden" name="role" value="" id="role-input" />
+          <div class="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label for="name" class="sr-only">Full name</label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                placeholder="Full name"
+              />
+            </div>
+            <div>
+              <label for="email" class="sr-only">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+              />
+            </div>
+            <div>
+              <label for="password" class="sr-only">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+              />
+            </div>
+          </div>
+          <div id="student-fields">
+            <div>
+              <label for="enrollment-number" class="sr-only">Enrollment Number</label>
+              <input
+                id="enrollment-number"
+                name="enrollment-number"
+                type="text"
+                placeholder="Enrollment Number"
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label for="year" class="sr-only">Year</label>
+              <input
+                id="year"
+                name="year"
+                type="text"
+                placeholder="Year"
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label for="class" class="sr-only">Class</label>
+              <input
+                id="class"
+                name="class"
+                type="text"
+                placeholder="Class"
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label for="stream" class="sr-only">Stream</label>
+              <input
+                id="stream"
+                name="stream"
+                type="text"
+                placeholder="Stream"
+                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+              />
+            </div>
+          </div>
+          <div id="progress-indicator" class="hidden">
+            <div class="progress-bar bg-green-500" style="width: 0%"></div>
+            <!-- Progress bar -->
+          </div>
+          <label for="photo" class="sr-only">Photo</label>
+          <input id="photo" name="photo" type="file" class="mb-2" />
+
+          <div>
+            <button
+              type="submit"
+              class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              Register
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script>
-        // Handle role selection
-        document.getElementById('role-select').addEventListener('change', function () {
-            document.getElementById('role-input').value = this.value;
+      // Handle role selection
+      document
+        .getElementById("role-select")
+        .addEventListener("change", function () {
+          document.getElementById("role-input").value = this.value;
         });
     </script>
-
-</body>
-
+  </body>
 </html>
