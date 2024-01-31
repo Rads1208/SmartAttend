@@ -5,121 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Faculty Dashboard - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-      import { auth } from "../assets/js/firebaseInit.js";
-      import {
-        signOut,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-      import {
-        getDatabase,
-        ref,
-        query,
-        orderByChild,
-        equalTo,
-        onValue,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          window.location.href = "/login.html";
-        } else {
-          document.getElementById(
-            "user-display-name"
-          ).textContent = `Welcome, ${user.displayName || "User"}`;
-          document.getElementById("teacher-name").value =
-            user.displayName || "Unknown Teacher";
-
-          const db = getDatabase();
-          const attendanceRef = ref(db, "attendance");
-          const findByTeacherQuery = query(
-            attendanceRef,
-            orderByChild("teacher_name"),
-            equalTo(user.displayName || "Unknown Teacher")
-          );
-
-          onValue(findByTeacherQuery, (snapshot) => {
-            const data = snapshot.val();
-            const attendanceTable =
-              document.getElementById("attendance-records");
-            attendanceTable.innerHTML = "";
-
-            if (data) {
-              Object.keys(data).forEach((key) => {
-                const record = data[key];
-                const readableTime = formatTimestamp(record.timestamp);
-                const row = `<tr>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.student_name}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.roll_number}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.class}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.stream}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.year}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.subject_code}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${readableTime}</td>
-                </tr>`;
-                attendanceTable.innerHTML += row;
-              });
-            } else {
-              attendanceTable.innerHTML =
-                "<tr><td colspan='5' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found.</td></tr>";
-            }
-          });
-        }
-      });
-
-      function formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        return (
-          date.toLocaleDateString("en-US") +
-          " " +
-          date.toLocaleTimeString("en-US")
-        );
-      }
-
-      document
-        .getElementById("start-class-form")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          const subjectCode = document.getElementById("subject-code").value;
-          const classValue = document.getElementById("class").value;
-          const stream = document.getElementById("stream").value;
-          const year = document.getElementById("year").value;
-          const teacherName = document.getElementById("teacher-name").value;
-
-          // AJAX request to our backend server
-          fetch("http://localhost:5000/start-class", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              year,
-              subjectCode,
-              class: classValue,
-              stream,
-              teacherName,
-            }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("Class started:", data);
-              alert("Class started!");
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              alert(error);
-            });
-        });
-
-      window.logout = async () => {
-        try {
-          await signOut(auth);
-          window.location.href = "/login.html";
-        } catch (error) {
-          console.error("Logout Failed", error);
-        }
-      };
-    </script>
   </head>
 
   <body class="bg-gray-100">
@@ -143,14 +28,28 @@
         </div>
       </div>
     </nav>
-
     <!-- Main Content -->
     <div class="container mx-auto px-6">
-      <!-- Start new class -->
       <div class="bg-white shadow rounded p-4 mb-6">
-        <h2 class="text-xl font-semibold mb-4">Start Class</h2>
-        <form id="start-class-form">
-          <!-- Year Dropdown -->
+            <button
+              type="submit" id="show-add-subject-form"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Add a Subject
+            </button>
+            <button
+              type="submit" id="show-manual-attendance-form"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Manually Mark Attendance
+            </button>
+            <div id="output" class="text-sm"></div>
+      </div>
+        
+      <!-- Add a Subject -->
+      <div class="bg-white shadow rounded p-4 mb-6 hidden" id="subject-add-form">
+        <h2 class="text-xl font-semibold mb-4">Add a Subject</h2>
+        <form>
           <select
             id="year"
             required
@@ -166,13 +65,13 @@
 
           <!-- Class Dropdown -->
           <select
-            id="class"
+            id="ed-degree"
             required
             class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
           >
-            <option value="">Select Class</option>
-            <option value="B.Tech">Bachelor of Technology</option>
-            <option value="M.Tech">Masters of Technology</option>
+            <option value="">Select Degree</option>
+            <option value="BTech">Bachelor of Technology</option>
+            <option value="MTech">Masters of Technology</option>
           </select>
 
           <!-- Stream Dropdown -->
@@ -186,17 +85,92 @@
             <option value="CSE">CSE</option>
           </select>
 
-          <!-- Subject Code Dropdown -->
-          <select
+          <input
             id="subject-code"
+            required placeholder="Subject Code"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input>
+
+          <input
+            id="subject-name"
+            required placeholder="Subject Name"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input>
+
+          <input
+            id="subject-credits"
+            required placeholder="Subject Credits"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input>
+
+          <!-- Submit Button -->
+          <div class="text-right">
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300">
+              Add Subject
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Mark Attendance Manually -->
+      <div class="bg-white shadow rounded p-4 mb-6 hidden" id="manual-attendance-form">
+        <h2 class="text-xl font-semibold mb-4">Manually Mark Attendance</h2>
+        <form>
+          <select
+            id="manual-year"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Year/Batch</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+          </select>
+
+          <!-- Class Dropdown -->
+          <select
+            id="manual-ed-degree"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Degree</option>
+            <option value="BTech">Bachelor of Technology</option>
+            <option value="MTech">Masters of Technology</option>
+          </select>
+
+          <!-- Stream Dropdown -->
+          <select
+            id="manual-stream"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Stream</option>
+            <option value="IT">IT</option>
+            <option value="CSE">CSE</option>
+          </select>
+
+          <select
+            id="manual-subject-code"
             required
             class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
           >
             <option value="">Select Subject</option>
-            <option value="CS101">CS - 101</option>
+            <option value="2020">BCS - 401</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
           </select>
-          <!-- Hidden Teacher Name -->
-          <input type="hidden" id="teacher-name" required />
+
+          <input
+            id="manual-student-enrollment-number"
+            required placeholder="Student Enrollment Number"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input>
 
           <!-- Submit Button -->
           <div class="text-right">
@@ -204,7 +178,74 @@
               type="submit"
               class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
             >
-              Start Class
+              Grant Attendance
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Record Attendance -->
+      <div class="bg-white shadow rounded p-4 mb-6" id="automatic-attendance-form">
+        <h2 class="text-xl font-semibold mb-4">Record Attendance</h2>
+        <form id="automatic-attendance-form">
+          <select
+            id="aams-year"
+            required 
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Year/Batch</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+          </select>
+
+          <!-- Class Dropdown -->
+          <select
+            id="aams-ed-degree"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Degree</option>
+            <option value="BTech">Bachelor of Technology</option>
+            <option value="MTech">Masters of Technology</option>
+          </select>
+
+          <!-- Stream Dropdown -->
+          <select
+            id="aams-stream"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Stream</option>
+            <option value="IT">IT</option>
+            <option value="CSE">CSE</option>
+          </select>
+
+          <!-- Subject Dropdown -->
+          <select
+            id="aams-subject-code"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+            <option value="">Select Subject</option>
+            <option value="2020">BCS - 401</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+          </select>
+          <label for="file" class="sr-only">Video</label>
+          <input id="aams-video" name="file" type="file" class="mb-2" accept="video/*"/>
+
+          <!-- Submit Button -->
+          <div class="text-right">
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Record Attendance
             </button>
           </div>
         </form>
@@ -263,28 +304,29 @@
         </div>
       </div>
       <!-- Class Schedule -->
-      <div class="bg-white shadow rounded p-4 mb-6">
+      <!-- <div class="bg-white shadow rounded p-4 mb-6">
         <h2 class="text-xl font-semibold mb-4">Your Schedule</h2>
         <ul>
           <li>Monday: Calculus (9:00 AM - 10:30 AM)</li>
           <li>Wednesday: Linear Algebra (1:00 PM - 2:30 PM)</li>
           <li>Friday: Statistics (11:00 AM - 12:30 PM)</li>
         </ul>
-      </div>
+      </div> -->
 
       <!-- Class Attendance -->
-      <div class="bg-white shadow rounded p-4 mb-6">
+      <!-- <div class="bg-white shadow rounded p-4 mb-6">
         <h2 class="text-xl font-semibold mb-4">Class Attendance</h2>
         <p>Calculus: 90% average attendance</p>
         <p>Linear Algebra: 85% average attendance</p>
         <p>Statistics: 87% average attendance</p>
-      </div>
+      </div> -->
 
       <!-- Queries from Students -->
       <div class="bg-white shadow rounded p-4 mb-6">
         <h2 class="text-xl font-semibold mb-4">Student Queries</h2>
-        <p>You have 3 new queries this week.</p>
-        <ul>
+        <p>Still under work</p>
+        <!-- <p>You have 3 new queries this week.</p> -->
+        <!-- <ul>
           <li>
             John Doe: Request for extended deadline on project submission.
           </li>
@@ -294,8 +336,9 @@
           <li>
             Emily Johnson: Inquire about office hours for additional help.
           </li>
-        </ul>
+        </ul> -->
       </div>
     </div>
+    <script src="faculty.js" type="module"></script>
   </body>
 </html>
