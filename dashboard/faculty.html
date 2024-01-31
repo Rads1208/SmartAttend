@@ -5,124 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Faculty Dashboard - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-      import { auth } from "../assets/js/firebaseInit.js";
-      import {
-        signOut,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-      import {
-        getDatabase,
-        ref,
-        query,
-        orderByChild,
-        equalTo,
-        onValue,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          window.location.href = "/login.html";
-        } else {
-          document.getElementById(
-            "user-display-name"
-          ).textContent = `Welcome, ${user.displayName || "User"}`;
-          document.getElementById("teacher-name").value =
-            user.displayName || "Unknown Teacher";
-
-          const db = getDatabase();
-          const attendanceRef = ref(db, "attendance");
-          const findByTeacherQuery = query(
-            attendanceRef,
-            orderByChild("teacher_name"),
-            equalTo(user.displayName || "Unknown Teacher")
-          );
-
-          onValue(findByTeacherQuery, (snapshot) => {
-            const data = snapshot.val();
-            const attendanceTable =
-              document.getElementById("attendance-records");
-            attendanceTable.innerHTML = "";
-
-            if (data) {
-              Object.keys(data).forEach((key) => {
-                const record = data[key];
-                const readableTime = formatTimestamp(record.timestamp);
-                const row = `<tr>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.student_name}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.roll_number}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.class}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.stream}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.year}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.subject_code}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${readableTime}</td>
-                </tr>`;
-                attendanceTable.innerHTML += row;
-              });
-            } else {
-              attendanceTable.innerHTML =
-                "<tr><td colspan='5' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found.</td></tr>";
-            }
-          });
-        }
-      });
-
-      function formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        return (
-          date.toLocaleDateString("en-US") +
-          " " +
-          date.toLocaleTimeString("en-US")
-        );
-      }
-
-      document
-        .getElementById("start-class-form")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          const subjectCode = document.getElementById("subject-code").value;
-          const classValue = document.getElementById("class").value;
-          const stream = document.getElementById("stream").value;
-          const year = document.getElementById("year").value;
-          const teacherName = document.getElementById("teacher-name").value;
-
-          // AJAX request to our backend server
-          fetch("http://localhost:5000/start-class", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              year,
-              subjectCode,
-              class: classValue,
-              stream,
-              teacherName,
-            }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("Class started:", data);
-              alert("Class started!");
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              alert(error);
-            });
-        });
-
-      window.logout = async () => {
-        try {
-          await signOut(auth);
-          window.location.href = "/login.html";
-        } catch (error) {
-          console.error("Logout Failed", error);
-        }
-      };
-    </script>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />  
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
   </head>
 
   <body class="bg-gray-100">
+    
     <!-- Navbar -->
     <nav class="bg-white shadow mb-8">
       <div class="container mx-auto px-6 py-3">
@@ -149,7 +37,7 @@
       <!-- Start new class -->
       <div class="bg-white shadow rounded p-4 mb-6">
         <h2 class="text-xl font-semibold mb-4">Start Class</h2>
-        <form id="start-class-form">
+        <form id="record-attendance-form">
           <!-- Year Dropdown -->
           <select
             id="year"
@@ -197,19 +85,18 @@
           </select>
           <!-- Hidden Teacher Name -->
           <input type="hidden" id="teacher-name" required />
+          <input id="photo" name="photo" type="file" class="mb-2" accept="video/*" required/>
 
           <!-- Submit Button -->
           <div class="text-right">
-            <button
-              type="submit"
-              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
-            >
-              Start Class
+            <button id="click-btn" py-click="FaceRecognition()">
+              Record Attendance
             </button>
           </div>
         </form>
       </div>
-
+      <button id="click-btn"  py-click="FaceRecognition()">Click</button>
+      <div id="output"></div>
       <!-- Attendance Records -->
       <div class="bg-white shadow rounded p-4 mb-6">
         <div class="overflow-x-auto">
@@ -297,5 +184,7 @@
         </ul>
       </div>
     </div>
+    <!-- <script src="./faculty.js"></script> -->
+    <py-script src="./face-recognition.py"></py-script>
   </body>
 </html>
