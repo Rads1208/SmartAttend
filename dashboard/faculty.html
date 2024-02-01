@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Faculty Dashboard - Attendance Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script> 
   </head>
 
   <body class="bg-gray-100">
@@ -242,11 +244,17 @@
           <!-- Submit Button -->
           <div class="text-right">
             <button
-              type="submit"
+              type="click" id="upload-video"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+            >
+              Upload Video
+            </button>
+            <!-- <button
+              type="submit" pys-onClick="FaceRecognition" id="record-attendance"
               class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
             >
               Record Attendance
-            </button>
+            </button> -->
           </div>
         </form>
       </div>
@@ -340,5 +348,6 @@
       </div>
     </div>
     <script src="faculty.js" type="module"></script>
+    <py-script defer src="./face-recognition/face-recognition.py"></py-script> 
   </body>
 </html>

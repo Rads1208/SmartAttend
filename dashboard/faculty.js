@@ -8,7 +8,7 @@ document.getElementById("show-manual-attendance-form").addEventListener("click",
 
 document.getElementById("subject-add-form").addEventListener("submit", function(event){AddSubject(event)})
 document.getElementById("manual-attendance-form").addEventListener('submit', function(event){ManualMarkAttendance(event)})
-document.getElementById("automatic-attendance-form").addEventListener("submit", function(event){AutomaticMarkAttendance(event)})
+document.getElementById("upload-video").addEventListener("click", function(event){AutomaticMarkAttendance(event)})
 
 function ShowSubjectAddForm(){
     let subject_add_button = document.getElementById("subject-add-form")
@@ -107,9 +107,6 @@ async function AutomaticMarkAttendance(event){
     }
 
     // Mark Automatic Attendance in Backend using Video - FR
-
-
-
 
     let display_output = document.getElementById("output");
     display_output.innerText = "Attendance Marked Successfully"
