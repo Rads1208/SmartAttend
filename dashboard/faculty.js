@@ -121,40 +121,37 @@ onAuthStateChanged(auth, (user) => {
       document.getElementById(
         "user-display-name"
       ).textContent = `Welcome, ${user.displayName || "User"}`;
-      document.getElementById("teacher-name").value = user.displayName || "Unknown Teacher";
+
+      if (user.displayName != null){
+        document.getElementById("teacher-name").value = user.displayName;
+      }
+      else{
+        document.getElementById("teacher-name").value = "Unknown Teacher";
+      }
 
       const db = getDatabase();
-      const attendanceRef = ref(db, "attendance");
-      const findByTeacherQuery = query(
-        attendanceRef,
-        orderByChild("teacher_name"),
-        equalTo(user.displayName || "Unknown Teacher")
-      );
-
-      onValue(findByTeacherQuery, (snapshot) => {
+      var attendanceRef = ref(db, `Attendance/MTech/CSE/2024/MCS-401`); // change path
+      onValue(attendanceRef, (snapshot) => {
         const data = snapshot.val();
-        const attendanceTable =
-          document.getElementById("attendance-records");
+        console.log(data)
+        const attendanceTable = document.getElementById("attendance-records");
         attendanceTable.innerHTML = "";
-
         if (data) {
           Object.keys(data).forEach((key) => {
             const record = data[key];
-            const readableTime = formatTimestamp(record.timestamp);
             const row = `<tr>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.student_name}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.roll_number}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.class}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.stream}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.year}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.subject_code}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${readableTime}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MTech</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">CSE</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">2020</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MCS-401</td>
+                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
             </tr>`;
             attendanceTable.innerHTML += row;
           });
         } else {
           attendanceTable.innerHTML =
-            "<tr><td colspan='5' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found.</td></tr>";
+            "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
         }
       });
     }
