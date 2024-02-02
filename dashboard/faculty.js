@@ -12,7 +12,12 @@ document.getElementById("upload-video").addEventListener("click", function(event
 
 function ShowSubjectAddForm(){
     let subject_add_button = document.getElementById("subject-add-form")
-    subject_add_button.classList.remove("hidden")
+    if(subject_add_button.classList.contains("hidden")){
+      subject_add_button.classList.remove("hidden")
+    }
+    else{
+      subject_add_button.classList.add("hidden")
+    }
 }
 
 function AddSubject(event){
@@ -44,8 +49,13 @@ function AddSubject(event){
 }
 
 function ShowManualAttendanceForm(){
-    let subject_add_button = document.getElementById("manual-attendance-form")
-    subject_add_button.classList.remove("hidden")
+    let manual_attendance_button = document.getElementById("manual-attendance-form")
+    if(manual_attendance_button.classList.contains("hidden")){
+      manual_attendance_button.classList.remove("hidden")
+    }
+    else{
+      manual_attendance_button.classList.add("hidden")
+    }
 }
 
 function ManualMarkAttendance(event){
