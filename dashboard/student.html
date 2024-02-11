@@ -37,6 +37,48 @@
         <h2 class="text-xl font-semibold mb-4">Attendance Summary</h2>
         <canvas id="attendanceChart"></canvas>
       </div> -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <button
+          type="submit" id="show-subject-register-form"
+          class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+        >
+          Register Subject
+        </button>
+        <div id="output" class="text-sm"></div>
+  </div>
+
+      <!-- Add a Subject -->
+      <div class="bg-white shadow rounded p-4 mb-6 hidden" id="subject-register-form">
+        <h2 class="text-xl font-semibold mb-4">Register Subject</h2>
+        <form>
+          <input
+            id="subject-code"
+            required placeholder="Subject Code"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input>
+
+          <input
+            id="teacher-name"
+            required placeholder="Teacher Name"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input>
+
+          <input type="hidden" id="year" required />
+          <input type="hidden" id="ed-degree" required />
+          <input type="hidden" id="stream" required />
+          <input type="hidden" id="user-uid" required />
+          <input type="hidden" id="enrollment-number" required />
+
+          <!-- Submit Button -->
+          <div class="text-right">
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300">
+              Register Subject
+            </button>
+          </div>
+        </form>
+      </div>
 
       <!-- Attendance Records -->
       <div class="bg-white shadow rounded p-4 mb-6">

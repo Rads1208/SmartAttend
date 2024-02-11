@@ -28,9 +28,10 @@ function AddSubject(event){
     const subjectCode = document.getElementById("subject-code").value;
     const subjectName = document.getElementById("subject-name").value;
     const subjectCredits = document.getElementById("subject-credits").value;
+    const teacherName = document.getElementById("teacher-name").value;
     
     // Add subject to firebase
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}.json`, {
         method: "POST",
         body: JSON.stringify({
             code: subjectCode,
@@ -66,9 +67,10 @@ function ManualMarkAttendance(event){
     const year = document.getElementById("manual-year").value;
     const degree = document.getElementById("manual-ed-degree").value;
     const stream = document.getElementById("manual-stream").value;
+    const teacherName = document.getElementById("teacher-name").value;
     
     // Mark Attendance in Backend Manually
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Attendance/${degree}/${stream}/${year}/${subject}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Attendance/${degree}/${stream}/${year}/${subject}/${teacherName}.json`, {
         method: "POST",
         body: JSON.stringify({
             enrollmentNumber: enrollmentNumber,
