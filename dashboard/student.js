@@ -119,16 +119,13 @@ function SubjectRegisterForm(event){
     const userUid = document.getElementById("user-uid").value;
     const userEnrollmentNumber = document.getElementById("enrollment-number").value;
     const teacherName = document.getElementById("teacher-name").value;
-    const userName = document.getElementById("user-display-name").value;
 
-    
     // Add subject to firebase
     fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}/${subject}/Students.json`, {
         method: "POST",
         body: JSON.stringify(
         {
             studentUid: userUid,
-            studentName: userName,
             studentEnrollmentNumber: userEnrollmentNumber
         }),
         headers: {
