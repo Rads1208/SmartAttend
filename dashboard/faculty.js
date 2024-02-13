@@ -154,34 +154,52 @@ onAuthStateChanged(auth, (user) => {
       else{
         document.getElementById("teacher-name").value = "Unknown Teacher";
       }
-
-      const db = getDatabase();
-      var attendanceRef = ref(db, `Attendance/MTech/CSE/2024/MCS-401`); // change path
-      onValue(attendanceRef, (snapshot) => {
-        const data = snapshot.val();
-        console.log(data)
-        const attendanceTable = document.getElementById("attendance-records");
-        attendanceTable.innerHTML = "";
-        if (data) {
-          Object.keys(data).forEach((key) => {
-            const record = data[key];
-            const row = `<tr>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MTech</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">CSE</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">2020</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MCS-401</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
-            </tr>`;
-            attendanceTable.innerHTML += row;
-          });
-        } else {
-          attendanceTable.innerHTML =
-            "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
-        }
-      });
     }
-  });
+
+    showAttendanceRecords(user.displayName);
+});
+
+function showAttendanceRecords(teacherName){
+  const attendanceTable = document.getElementById("attendance-records");
+  attendanceTable.innerHTML = "";
+
+  const db = getDatabase();
+  var attendanceRef = ref(db, `Attendance/`);
+
+  onValue(attendanceRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data){
+      for (const degree in data){
+        for (const stream in data[degree]){
+          for (const year in data[degree][stream]){
+            for (const teacher in data[degree][stream][year]){
+              if (teacher == teacherName){
+                for (const subject in data[degree][stream][year][teacher]){
+                  for (const key in data[degree][stream][year][teacher][subject]){
+                    const record = data[degree][stream][year][teacher][subject][key];
+                    if (record.enrollmentNumber != undefined){
+                      const row = `<tr>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${degree}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${stream}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${year}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subject}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
+                        </tr>`;
+                      attendanceTable.innerHTML += row;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } else{
+      attendanceTable.innerHTML = "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
+    }
+  }); 
+}
 
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);

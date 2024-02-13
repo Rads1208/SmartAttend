@@ -76,14 +76,16 @@ function showAttendanceRecords(year, degree, stream, enrollmentNumber){
                     for(const key in data[teacher][subject]){
                         if(data[teacher][subject][key].enrollmentNumber == enrollmentNumber){
                             const record = data[teacher][subject][key];
-                            const row = `<tr>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectCode}</td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectName}</td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectCredits}</td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
-                                </tr>`;
-                            attendanceTable.innerHTML += row;
+                            if (record.enrollmentNumber != undefined){
+                                const row = `<tr>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectCode}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectName}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectCredits}</td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
+                                    </tr>`;
+                                attendanceTable.innerHTML += row;
+                            }
                         }
                     }
                 }
