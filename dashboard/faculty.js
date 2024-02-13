@@ -31,13 +31,9 @@ function AddSubject(event){
     const teacherName = document.getElementById("teacher-name").value;
     
     // Add subject to firebase
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}/${subjectCode} ${subjectName} ${subjectCredits}.json`, {
         method: "POST",
-        body: JSON.stringify({
-            code: subjectCode,
-            name: subjectName,
-            credits: subjectCredits
-        }),
+        body: JSON.stringify('Subject Added'),
         headers: {
             "Content-type": "application/json; charset=UTF-8"
         }
