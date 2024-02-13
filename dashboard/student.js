@@ -41,6 +41,10 @@ async function displayUserPhotos(user) {
             } catch (error) {
                 console.error("Error fetching photo:", error);
             }
+
+            // calling show attendance records data
+
+            showAttendanceRecords(userData.year, userData.class.replace('.', ''), userData.stream, userData.enrollmentNumber);
         } else {
             console.error("User data not found in the database");
         }
@@ -49,26 +53,46 @@ async function displayUserPhotos(user) {
     }
 }
 
-const db = getDatabase();
-var attendanceRef = dbRef(db, `Attendance/MTech/CSE/2024/MCS-401`); // change path
-onValue(attendanceRef, (snapshot) => {
-    const data = snapshot.val();
-    const attendanceTable = document.getElementById("attendance-records");
-    attendanceTable.innerHTML = "";
-    if (data) {
-        Object.keys(data).forEach((key) => {
-            const record = data[key];
-            const row = `<tr>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MCS-401</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
-                </tr>`;
-            attendanceTable.innerHTML += row;
-        });
-    } else {
-        attendanceTable.innerHTML = "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
-    }
-});
+function showAttendanceRecords(year, degree, stream, enrollmentNumber){
+    const db = getDatabase();
+    var attendanceRef = dbRef(db, `Attendance/${degree}/${stream}/${year}`); // change path
+    onValue(attendanceRef, (snapshot) => {
+        const data = snapshot.val();
+        const attendanceTable = document.getElementById("attendance-records");
+        attendanceTable.innerHTML = "";
+
+        if (data){
+            for(const teacher in data){
+                for(const subject in data[teacher]){
+                    const subDetails = subject.split(" ");
+                    
+                    const subjectCode = subDetails[0];
+                    const subjectCredits = subDetails[subDetails.length - 1];
+                    var subjectName = "";
+                    for (let i = 1 ; i < subDetails.length - 1 ; i++){
+                        subjectName += subDetails[i] + " ";
+                    }
+
+                    for(const key in data[teacher][subject]){
+                        if(data[teacher][subject][key].enrollmentNumber == enrollmentNumber){
+                            const record = data[teacher][subject][key];
+                            const row = `<tr>
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectCode}</td>
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectName}</td>
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subjectCredits}</td>
+                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
+                                </tr>`;
+                            attendanceTable.innerHTML += row;
+                        }
+                    }
+                }
+            }
+        } else {
+            attendanceTable.innerHTML = "<tr><td colspan='5' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
+        }
+    });
+}
       
 window.logout = async () => {
     try {
