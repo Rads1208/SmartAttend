@@ -51,17 +51,33 @@
       <div class="bg-white shadow rounded p-4 mb-6 hidden" id="subject-register-form">
         <h2 class="text-xl font-semibold mb-4">Register Subject</h2>
         <form>
-          <input
+          <select
+            id="teacher-name"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+          <option value="">Select Teacher</option>
+          </select>
+
+          <!-- <input
             id="subject-code"
             required placeholder="Subject Code"
             class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-          ></input>
+          ></input> -->
 
-          <input
+          <select
+            id="subject"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+          <option value="">Select Subject</option>
+          </select>
+
+          <!-- <input
             id="teacher-name"
             required placeholder="Teacher Name"
             class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-          ></input>
+          ></input> -->
 
           <input type="hidden" id="year" required />
           <input type="hidden" id="ed-degree" required />

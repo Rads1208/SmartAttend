@@ -82,7 +82,28 @@ window.logout = async () => {
 function ShowSubjectRegisterForm(){
     let subject_add_button = document.getElementById("subject-register-form")
     if(subject_add_button.classList.contains("hidden")){
-      subject_add_button.classList.remove("hidden")
+        subject_add_button.classList.remove("hidden");
+
+        const year = document.getElementById("year").value;
+        const degree = document.getElementById("ed-degree").value;
+        const stream = document.getElementById("stream").value;
+
+        const db = getDatabase();
+        var subjectRef = dbRef(db, `Subjects/${degree}/${stream}/${year}`);
+        onValue(subjectRef, (snapshot) => {
+            const data = snapshot.val();
+            for (const key in data) {
+                document.getElementById("teacher-name").innerHTML += `<option value="${key}">${key}</option>`;
+                document.getElementById("teacher-name").addEventListener("click", function(event){
+                    document.getElementById("subject").innerHTML = `<option value="">Select Subject</option>`;
+                    const teacher = document.getElementById("teacher-name").value;
+                    console.log(teacher);
+                    for (const subject in data[teacher]){
+                        document.getElementById("subject").innerHTML += `<option value="${subject}">${subject}</option>`;
+                    }
+                })
+            }
+        });
     }
     else{
       subject_add_button.classList.add("hidden")
@@ -94,7 +115,7 @@ function SubjectRegisterForm(event){
     const year = document.getElementById("year").value;
     const degree = document.getElementById("ed-degree").value;
     const stream = document.getElementById("stream").value;
-    const subjectCode = document.getElementById("subject-code").value;
+    const subject = document.getElementById("subject").value;
     const userUid = document.getElementById("user-uid").value;
     const userEnrollmentNumber = document.getElementById("enrollment-number").value;
     const teacherName = document.getElementById("teacher-name").value;
@@ -102,7 +123,7 @@ function SubjectRegisterForm(event){
 
     
     // Add subject to firebase
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}/Students/${subjectCode}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}/${subject}/Students.json`, {
         method: "POST",
         body: JSON.stringify(
         {
