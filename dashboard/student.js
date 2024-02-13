@@ -97,7 +97,7 @@ function ShowSubjectRegisterForm(){
                 document.getElementById("teacher-name").addEventListener("click", function(event){
                     document.getElementById("subject").innerHTML = `<option value="">Select Subject</option>`;
                     const teacher = document.getElementById("teacher-name").value;
-                    console.log(teacher);
+                    // console.log(teacher);
                     for (const subject in data[teacher]){
                         document.getElementById("subject").innerHTML += `<option value="${subject}">${subject}</option>`;
                     }

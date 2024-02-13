@@ -48,7 +48,25 @@ function AddSubject(event){
 function ShowManualAttendanceForm(){
     let manual_attendance_button = document.getElementById("manual-attendance-form")
     if(manual_attendance_button.classList.contains("hidden")){
-      manual_attendance_button.classList.remove("hidden")
+      manual_attendance_button.classList.remove("hidden");
+
+      const teacherName = document.getElementById("teacher-name").value;
+
+      const db = getDatabase();
+      var subjectRef = ref(db, `Subjects`);
+      onValue(subjectRef, (snapshot) => {
+        const data = snapshot.val();
+        document.getElementById("manual-subject").addEventListener("click", function(){
+          const year = document.getElementById("manual-year").value;
+          const degree = document.getElementById("manual-ed-degree").value;
+          const stream = document.getElementById("manual-stream").value;
+
+          for(const subject in data[degree][stream][year][teacherName]){
+            console.log(subject);
+            document.getElementById("manual-subject").innerHTML += `<option value="${subject}">${subject}</option>`;
+          }
+        })
+      });
     }
     else{
       manual_attendance_button.classList.add("hidden")
@@ -58,7 +76,7 @@ function ShowManualAttendanceForm(){
 function ManualMarkAttendance(event){
     event.preventDefault();
 
-    const subject = document.getElementById("manual-subject-code").value;
+    const subject = document.getElementById("manual-subject").value;
     const enrollmentNumber = document.getElementById("manual-student-enrollment-number").value;
     const year = document.getElementById("manual-year").value;
     const degree = document.getElementById("manual-ed-degree").value;
@@ -66,7 +84,7 @@ function ManualMarkAttendance(event){
     const teacherName = document.getElementById("teacher-name").value;
     
     // Mark Attendance in Backend Manually
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Attendance/${degree}/${stream}/${year}/${subject}/${teacherName}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Attendance/${degree}/${stream}/${year}/${teacherName}/${subject}.json`, {
         method: "POST",
         body: JSON.stringify({
             enrollmentNumber: enrollmentNumber,
