@@ -9,6 +9,7 @@ document.getElementById("show-manual-attendance-form").addEventListener("click",
 document.getElementById("subject-add-form").addEventListener("submit", function(event){AddSubject(event)})
 document.getElementById("manual-attendance-form").addEventListener('submit', function(event){ManualMarkAttendance(event)})
 document.getElementById("upload-video").addEventListener("click", function(event){AutomaticMarkAttendance(event)})
+document.getElementById("aams-subject-code").addEventListener("click", function(event){getSubjectsAAMS(event)});
 
 function ShowSubjectAddForm(){
     let subject_add_button = document.getElementById("subject-add-form")
@@ -208,6 +209,24 @@ function formatTimestamp(timestamp) {
       " " +
       date.toLocaleTimeString("en-US")
     );
+}
+
+function getSubjectsAAMS(event){
+  document.getElementById("aams-subject-code").innerHTML = "";
+  const year = document.getElementById("aams-year").value;
+  const degree = document.getElementById("aams-ed-degree").value;
+  const stream = document.getElementById("aams-stream").value;
+  const teacherName = document.getElementById("teacher-name").value;
+
+  const db = getDatabase();
+  var subjectRef = ref(db, `Subjects/${degree}/${stream}/${year}/${teacherName}`);
+
+  onValue(subjectRef, (snapshot) => {
+    const data = snapshot.val();
+    for(const subject in data){
+        document.getElementById("aams-subject-code").innerHTML += `<option value="${subject}">${subject}</option>`;
+      }
+    })
 }
 
 window.logout = async () => {
