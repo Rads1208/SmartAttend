@@ -12,7 +12,12 @@ document.getElementById("upload-video").addEventListener("click", function(event
 
 function ShowSubjectAddForm(){
     let subject_add_button = document.getElementById("subject-add-form")
-    subject_add_button.classList.remove("hidden")
+    if(subject_add_button.classList.contains("hidden")){
+      subject_add_button.classList.remove("hidden")
+    }
+    else{
+      subject_add_button.classList.add("hidden")
+    }
 }
 
 function AddSubject(event){
@@ -23,15 +28,12 @@ function AddSubject(event){
     const subjectCode = document.getElementById("subject-code").value;
     const subjectName = document.getElementById("subject-name").value;
     const subjectCredits = document.getElementById("subject-credits").value;
+    const teacherName = document.getElementById("teacher-name").value;
     
     // Add subject to firebase
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Subjects/${degree}/${stream}/${year}/${teacherName}/${subjectCode} ${subjectName} ${subjectCredits}.json`, {
         method: "POST",
-        body: JSON.stringify({
-            code: subjectCode,
-            name: subjectName,
-            credits: subjectCredits
-        }),
+        body: JSON.stringify('Subject Added'),
         headers: {
             "Content-type": "application/json; charset=UTF-8"
         }
@@ -44,21 +46,45 @@ function AddSubject(event){
 }
 
 function ShowManualAttendanceForm(){
-    let subject_add_button = document.getElementById("manual-attendance-form")
-    subject_add_button.classList.remove("hidden")
+    let manual_attendance_button = document.getElementById("manual-attendance-form")
+    if(manual_attendance_button.classList.contains("hidden")){
+      manual_attendance_button.classList.remove("hidden");
+
+      const teacherName = document.getElementById("teacher-name").value;
+
+      const db = getDatabase();
+      var subjectRef = ref(db, `Subjects`);
+      onValue(subjectRef, (snapshot) => {
+        const data = snapshot.val();
+        document.getElementById("manual-subject").addEventListener("click", function(){
+          const year = document.getElementById("manual-year").value;
+          const degree = document.getElementById("manual-ed-degree").value;
+          const stream = document.getElementById("manual-stream").value;
+
+          for(const subject in data[degree][stream][year][teacherName]){
+            console.log(subject);
+            document.getElementById("manual-subject").innerHTML += `<option value="${subject}">${subject}</option>`;
+          }
+        })
+      });
+    }
+    else{
+      manual_attendance_button.classList.add("hidden")
+    }
 }
 
 function ManualMarkAttendance(event){
     event.preventDefault();
 
-    const subject = document.getElementById("manual-subject-code").value;
+    const subject = document.getElementById("manual-subject").value;
     const enrollmentNumber = document.getElementById("manual-student-enrollment-number").value;
     const year = document.getElementById("manual-year").value;
     const degree = document.getElementById("manual-ed-degree").value;
     const stream = document.getElementById("manual-stream").value;
+    const teacherName = document.getElementById("teacher-name").value;
     
     // Mark Attendance in Backend Manually
-    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Attendance/${degree}/${stream}/${year}/${subject}.json`, {
+    fetch(`https://smartattend-6da73-default-rtdb.firebaseio.com/Attendance/${degree}/${stream}/${year}/${teacherName}/${subject}.json`, {
         method: "POST",
         body: JSON.stringify({
             enrollmentNumber: enrollmentNumber,
@@ -128,34 +154,52 @@ onAuthStateChanged(auth, (user) => {
       else{
         document.getElementById("teacher-name").value = "Unknown Teacher";
       }
-
-      const db = getDatabase();
-      var attendanceRef = ref(db, `Attendance/MTech/CSE/2024/MCS-401`); // change path
-      onValue(attendanceRef, (snapshot) => {
-        const data = snapshot.val();
-        console.log(data)
-        const attendanceTable = document.getElementById("attendance-records");
-        attendanceTable.innerHTML = "";
-        if (data) {
-          Object.keys(data).forEach((key) => {
-            const record = data[key];
-            const row = `<tr>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MTech</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">CSE</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">2020</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MCS-401</td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
-            </tr>`;
-            attendanceTable.innerHTML += row;
-          });
-        } else {
-          attendanceTable.innerHTML =
-            "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
-        }
-      });
     }
-  });
+
+    showAttendanceRecords(user.displayName);
+});
+
+function showAttendanceRecords(teacherName){
+  const attendanceTable = document.getElementById("attendance-records");
+  attendanceTable.innerHTML = "";
+
+  const db = getDatabase();
+  var attendanceRef = ref(db, `Attendance/`);
+
+  onValue(attendanceRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data){
+      for (const degree in data){
+        for (const stream in data[degree]){
+          for (const year in data[degree][stream]){
+            for (const teacher in data[degree][stream][year]){
+              if (teacher == teacherName){
+                for (const subject in data[degree][stream][year][teacher]){
+                  for (const key in data[degree][stream][year][teacher][subject]){
+                    const record = data[degree][stream][year][teacher][subject][key];
+                    if (record.enrollmentNumber != undefined){
+                      const row = `<tr>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${degree}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${stream}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${year}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${subject}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
+                        </tr>`;
+                      attendanceTable.innerHTML += row;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } else{
+      attendanceTable.innerHTML = "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
+    }
+  }); 
+}
 
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);

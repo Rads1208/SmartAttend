@@ -3,96 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard - Attendance Management System</title>
+    <title>Student Dashboard - SmartAttend</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module">
-      import { auth, storage, database } from "../assets/js/firebaseInit.js";
-      import {
-        signOut,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-      import {
-        ref,
-        listAll,
-        getDownloadURL,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-      import {
-        getDatabase,
-        onValue,
-        ref as dbRef,
-        get,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          window.location.href = "/login.html";
-        } else {
-          document.getElementById(
-            "user-display-name"
-          ).textContent = `Welcome, ${user.displayName || "User"}`;
-          displayUserPhotos(user);
-        }
-      });
-
-      async function displayUserPhotos(user) {
-        const userDbRef = dbRef(database, `users/${user.uid}`);
-        try {
-          const snapshot = await get(userDbRef);
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            const photoPath = `user_photos/${userData.year}/${userData.class}/${userData.stream}/${userData.enrollmentNumber}/face_photo`;
-            const photoRef = ref(storage, photoPath);
-            const photosContainer = document.getElementById("uploaded-photos");
-            
-            try {
-              const url = await getDownloadURL(photoRef);
-              const img = document.createElement("img");
-              img.src = url;
-              img.classList.add("w-full", "h-auto", "rounded");
-              photosContainer.appendChild(img);
-            } catch (error) {
-              console.error("Error fetching photo:", error);
-            }
-          } else {
-            console.error("User data not found in the database");
-          }
-        } catch (error) {
-          console.error("Error fetching user data from database:", error);
-        }
-      }
-
-      const db = getDatabase();
-      var attendanceRef = dbRef(db, `Attendance/MTech/CSE/2024/MCS-401`); // change path
-      onValue(attendanceRef, (snapshot) => {
-              const data = snapshot.val();
-              const attendanceTable = document.getElementById("attendance-records");
-              attendanceTable.innerHTML = "";
-              if (data) {
-                Object.keys(data).forEach((key) => {
-                  const record = data[key];
-                  const row = `<tr>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.enrollmentNumber}</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">MCS-401</td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${record.timestamp}</td>
-                  </tr>`;
-                  attendanceTable.innerHTML += row;
-                });
-              } else {
-                attendanceTable.innerHTML =
-                  "<tr><td colspan='6' class='text-center px-5 py-5 border-b border-gray-200 bg-white text-sm'>No attendance records found</td></tr>";
-              }
-              });
-      
-      window.logout = async () => {
-        try {
-          await signOut(auth);
-          window.location.href = "./../login.html";
-        } catch (error) {
-          console.error("Logout Failed", error);
-        }
-      };
-    </script>
   </head>
 
   <body class="bg-gray-100">
@@ -124,6 +37,64 @@
         <h2 class="text-xl font-semibold mb-4">Attendance Summary</h2>
         <canvas id="attendanceChart"></canvas>
       </div> -->
+      <div class="bg-white shadow rounded p-4 mb-6">
+        <button
+          type="submit" id="show-subject-register-form"
+          class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300"
+        >
+          Register Subject
+        </button>
+        <div id="output" class="text-sm"></div>
+  </div>
+
+      <!-- Add a Subject -->
+      <div class="bg-white shadow rounded p-4 mb-6 hidden" id="subject-register-form">
+        <h2 class="text-xl font-semibold mb-4">Register Subject</h2>
+        <form>
+          <select
+            id="teacher-name"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+          <option value="">Select Teacher</option>
+          </select>
+
+          <!-- <input
+            id="subject-code"
+            required placeholder="Subject Code"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input> -->
+
+          <select
+            id="subject"
+            required
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          >
+          <option value="">Select Subject</option>
+          </select>
+
+          <!-- <input
+            id="teacher-name"
+            required placeholder="Teacher Name"
+            class="mb-4 block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></input> -->
+
+          <input type="hidden" id="year" required />
+          <input type="hidden" id="ed-degree" required />
+          <input type="hidden" id="stream" required />
+          <input type="hidden" id="user-uid" required />
+          <input type="hidden" id="enrollment-number" required />
+
+          <!-- Submit Button -->
+          <div class="text-right">
+            <button
+              type="submit"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300">
+              Register Subject
+            </button>
+          </div>
+        </form>
+      </div>
 
       <!-- Attendance Records -->
       <div class="bg-white shadow rounded p-4 mb-6">
@@ -142,12 +113,22 @@
                 <th
                   class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
                 >
-                  Subject
+                  Subject Code
                 </th>
                 <th
                   class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
                 >
-                  Attandance Time
+                  Subject Name
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Subject Credits
+                </th>
+                <th
+                  class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Attandance timestamp
                 </th>
               </tr>
             </thead>
@@ -159,27 +140,25 @@
       </div>
 
       <!-- Subjects Enrolled -->
-      <div class="bg-white shadow rounded p-4 mb-6">
+      <!-- <div class="bg-white shadow rounded p-4 mb-6">
         <h2 class="text-xl font-semibold mb-4">Subjects Enrolled</h2>
         <ul>
-          <!-- List subjects here -->
           <li>Mathematics - 85%</li>
           <li>Physics - 90%</li>
           <li>Literature - 95%</li>
         </ul>
-      </div>
+      </div> -->
 
       <!-- Upcoming Classes or Events -->
-      <div class="bg-white shadow rounded p-4 mb-6">
+      <!-- <div class="bg-white shadow rounded p-4 mb-6">
         <h2 class="text-xl font-semibold mb-4">Upcoming Classes</h2>
         <div>
-          <!-- List of upcoming classes/events here -->
           <p>Calculus - Monday 10am</p>
           <p>History - Tuesday 1pm</p>
         </div>
-      </div>
+      </div> -->
 
-      <div class="container mx-auto px-6 mt-6">
+      <div class="container mx-auto px-6 mt-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Your Uploaded Photos</h2>
         <div
           id="uploaded-photos"
@@ -198,6 +177,8 @@
         </div>
       </div>
     </div>
+
+    <script src="./student.js" type="module"></script>
 
     <!-- <script>
       const ctx = document.getElementById("attendanceChart").getContext("2d");
