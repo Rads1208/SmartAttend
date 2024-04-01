@@ -8,6 +8,7 @@ document.getElementById("show-manual-attendance-form").addEventListener("click",
 
 document.getElementById("subject-add-form").addEventListener("submit", function(event){AddSubject(event)})
 document.getElementById("manual-attendance-form").addEventListener('submit', function(event){ManualMarkAttendance(event)})
+
 document.getElementById("upload-video").addEventListener("click", function(event){AutomaticMarkAttendance(event)})
 document.getElementById("aams-subject-code").addEventListener("focusin", function(event){getSubjectsAAMS(event)});
 
