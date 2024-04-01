@@ -8,7 +8,9 @@ document.getElementById("show-manual-attendance-form").addEventListener("click",
 
 document.getElementById("subject-add-form").addEventListener("submit", function(event){AddSubject(event)})
 document.getElementById("manual-attendance-form").addEventListener('submit', function(event){ManualMarkAttendance(event)})
+
 document.getElementById("upload-video").addEventListener("click", function(event){AutomaticMarkAttendance(event)})
+document.getElementById("aams-subject-code").addEventListener("focusin", function(event){getSubjectsAAMS(event)});
 
 function ShowSubjectAddForm(){
     let subject_add_button = document.getElementById("subject-add-form")
@@ -46,7 +48,7 @@ function AddSubject(event){
 }
 
 function ShowManualAttendanceForm(){
-    let manual_attendance_button = document.getElementById("manual-attendance-form")
+    let manual_attendance_button = document.getElementById("manual-attendance-form");
     if(manual_attendance_button.classList.contains("hidden")){
       manual_attendance_button.classList.remove("hidden");
 
@@ -56,7 +58,7 @@ function ShowManualAttendanceForm(){
       var subjectRef = ref(db, `Subjects`);
       onValue(subjectRef, (snapshot) => {
         const data = snapshot.val();
-        document.getElementById("manual-subject").addEventListener("click", function(){
+        document.getElementById("manual-subject").addEventListener("focusin", function(){
           const year = document.getElementById("manual-year").value;
           const degree = document.getElementById("manual-ed-degree").value;
           const stream = document.getElementById("manual-stream").value;
@@ -208,6 +210,24 @@ function formatTimestamp(timestamp) {
       " " +
       date.toLocaleTimeString("en-US")
     );
+}
+
+function getSubjectsAAMS(event){
+  document.getElementById("aams-subject-code").innerHTML = "";
+  const year = document.getElementById("aams-year").value;
+  const degree = document.getElementById("aams-ed-degree").value;
+  const stream = document.getElementById("aams-stream").value;
+  const teacherName = document.getElementById("teacher-name").value;
+
+  const db = getDatabase();
+  var subjectRef = ref(db, `Subjects/${degree}/${stream}/${year}/${teacherName}`);
+
+  onValue(subjectRef, (snapshot) => {
+    const data = snapshot.val();
+    for(const subject in data){
+        document.getElementById("aams-subject-code").innerHTML += `<option value="${subject}">${subject}</option>`;
+      }
+    })
 }
 
 window.logout = async () => {
